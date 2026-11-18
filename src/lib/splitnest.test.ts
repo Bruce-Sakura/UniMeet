@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Expense, Household } from '../types/splitnest';
 import { calculateNetBalances, getExpenseShares } from './balances';
 import { formatPenceToGbp, parseGbpToPence, splitEvenlyPence } from './money';
-import { clearState, loadState, saveState } from './storage';
+import { clearState, loadState, loadStateResult, saveState } from './storage';
 import { validateExpenseInput, validateHouseholdInput } from './validation';
 
 const threePersonHousehold: Household = {
@@ -176,5 +176,14 @@ describe('validation and localStorage persistence', () => {
     };
     saveState(state);
     expect(loadState()).toEqual(state);
+  });
+
+  it('returns diagnostic errors and logs on invalid or unreadable stored state', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    window.localStorage.setItem('splitnest_state_v1', JSON.stringify({ household: { name: 'Empty' } }));
+    const result = loadStateResult();
+    expect(result.error).toBe('Saved household data is invalid.');
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('invalid household schema'));
+    errorSpy.mockRestore();
   });
 });

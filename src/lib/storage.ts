@@ -65,6 +65,7 @@ export function loadStateResult(): LoadStateResult {
     }
     const household = isValidHousehold(parsed.household) ? parsed.household : null;
     if (!household) {
+      console.error('Failed to parse SplitNest state from localStorage: invalid household schema');
       return { state: EMPTY_STATE, error: 'Saved household data is invalid.' };
     }
     const expenses = Array.isArray(parsed.expenses)
