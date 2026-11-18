@@ -23,6 +23,7 @@
 ## Hardening and reliability
 - Maintain invariant accessible names on all form controls: visual restyling or copy edits must never alter or remove accessible roles and names (e.g. submit buttons must retain accessible name 'Add expense') relied upon by screen readers and automated test suites.
 - Never swallow errors in empty catch blocks: all storage, network, or parsing operations must return explicit status indicators and log actionable diagnostics or surface inline user warnings on failure.
+- Guard state persistence against destructive erasure on load failure: storage load operations must distinguish uninitialized empty storage from read or parse failures by returning an explicit error indicator, and state synchronization effects must never clear or overwrite stored data when initialization fails.
 
 ## Definition of done
 - Provide working `dev`, `lint`, `test`, and `build` scripts in `package.json`.
