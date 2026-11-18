@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Plus, Trash2, Home, AlertCircle } from 'lucide-react';
 import { validateHouseholdInput } from '../lib/validation';
 
 interface HouseholdSetupProps {
@@ -38,21 +39,21 @@ export function HouseholdSetup({ onCreateHousehold }: HouseholdSetupProps) {
   };
 
   return (
-    <div className="mx-auto max-w-lg rounded-2xl border border-[#dcdccf] bg-[#fdfcf7] p-7 shadow-[0_4px_20px_rgba(43,54,44,0.05)] sm:p-9">
-      <div className="mb-7 border-b border-[#ece9dc] pb-6">
-        <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#b8baa6] bg-[#ece9dc] text-[10px] font-serif font-semibold text-[#4a573e]">
-            SN
-          </span>
-          <span className="text-[10px] font-medium tracking-[0.22em] text-[#717b6a] uppercase">
-            SplitNest · Shared Living
-          </span>
+    <div className="w-full max-w-lg rounded-xl border border-[#E5E5E5] bg-white p-8 shadow-xs">
+      <div className="mb-8">
+        <div className="flex items-center gap-2.5 text-xs font-medium tracking-tight text-[#171717]">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#171717] text-white">
+            <Home className="h-4 w-4" />
+          </div>
+          <span className="font-semibold text-sm">SplitNest</span>
+          <span className="text-[#A3A3A3]">/</span>
+          <span className="text-[#737373]">Setup</span>
         </div>
-        <h1 className="mt-3 font-serif text-3xl font-normal tracking-tight text-[#2b362c]">
-          Open a household ledger
+        <h1 className="mt-4 text-2xl font-semibold tracking-tight text-[#171717]">
+          Create your household
         </h1>
-        <p className="mt-2 text-sm leading-relaxed text-[#6e7568]">
-          Establish your residence and register at least two housemates to split shared costs equally in GBP.
+        <p className="mt-1.5 text-sm text-[#737373] leading-relaxed">
+          Set up your residence and register at least two housemates to start tracking and splitting shared expenses.
         </p>
       </div>
 
@@ -60,9 +61,9 @@ export function HouseholdSetup({ onCreateHousehold }: HouseholdSetupProps) {
         <div>
           <label
             htmlFor="household-name"
-            className="block text-xs font-medium tracking-wide text-[#424c3f] uppercase"
+            className="block text-xs font-medium uppercase tracking-wider text-[#737373]"
           >
-            Residence or household name
+            Household name
           </label>
           <input
             id="household-name"
@@ -73,21 +74,22 @@ export function HouseholdSetup({ onCreateHousehold }: HouseholdSetupProps) {
               if (error) setError(null);
             }}
             placeholder="e.g. 42 Oakfield Road"
-            className="mt-2 block w-full rounded-lg border border-[#dadcca] bg-white px-3.5 py-2.5 text-sm text-[#2b362c] placeholder:text-[#9ea397] focus:border-[#4a573e] focus:ring-1 focus:ring-[#4a573e] focus:outline-none"
+            className="mt-2 block w-full rounded-lg border border-[#E5E5E5] bg-white px-3.5 py-2.5 text-sm text-[#171717] placeholder:text-[#A3A3A3] focus:border-[#171717] focus:ring-1 focus:ring-[#171717] focus:outline-none transition-colors"
           />
         </div>
 
         <div>
           <div className="flex items-center justify-between">
-            <span className="block text-xs font-medium tracking-wide text-[#424c3f] uppercase">
-              Registered housemates
+            <span className="block text-xs font-medium uppercase tracking-wider text-[#737373]">
+              Housemates (minimum 2)
             </span>
             <button
               type="button"
               onClick={handleAddRow}
-              className="text-xs font-medium text-[#4a573e] underline decoration-[#b8baa6] underline-offset-4 hover:text-[#3a4531]"
+              className="inline-flex items-center gap-1 text-xs font-medium text-[#171717] hover:text-[#737373] transition-colors"
             >
-              + Add housemate
+              <Plus className="h-3.5 w-3.5" />
+              <span>+ Add housemate</span>
             </button>
           </div>
 
@@ -99,19 +101,17 @@ export function HouseholdSetup({ onCreateHousehold }: HouseholdSetupProps) {
                   aria-label={`Housemate ${index + 1} name`}
                   value={name}
                   onChange={(e) => handleMemberChange(index, e.target.value)}
-                  placeholder={`Housemate ${index + 1} (e.g. ${
-                    ['Alice', 'Bob', 'Charlie', 'Priya'][index] ?? 'Sam'
-                  })`}
-                  className="block w-full rounded-lg border border-[#dadcca] bg-white px-3.5 py-2.5 text-sm text-[#2b362c] placeholder:text-[#9ea397] focus:border-[#4a573e] focus:ring-1 focus:ring-[#4a573e] focus:outline-none"
+                  placeholder={`Housemate ${index + 1} name`}
+                  className="block w-full rounded-lg border border-[#E5E5E5] bg-white px-3.5 py-2.5 text-sm text-[#171717] placeholder:text-[#A3A3A3] focus:border-[#171717] focus:ring-1 focus:ring-[#171717] focus:outline-none transition-colors"
                 />
                 {memberRows.length > 2 && (
                   <button
                     type="button"
                     onClick={() => handleRemoveRow(index)}
                     aria-label={`Remove housemate ${index + 1}`}
-                    className="rounded-lg border border-[#dadcca] px-2.5 py-2.5 text-xs text-[#717b6a] hover:bg-[#f5f3ea] hover:text-[#2b362c]"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#E5E5E5] text-[#737373] hover:bg-[#F3F4F6] hover:text-[#171717] transition-colors"
                   >
-                    Remove
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 )}
               </div>
@@ -122,15 +122,16 @@ export function HouseholdSetup({ onCreateHousehold }: HouseholdSetupProps) {
         {error && (
           <div
             role="alert"
-            className="rounded-lg border border-[#e2b8ad] bg-[#faf0ed] px-4 py-3 text-sm text-[#9e4a34]"
+            className="flex items-center gap-2.5 rounded-lg border border-[#171717] bg-[#F7F7F8] p-3 text-xs font-medium text-[#171717]"
           >
-            {error}
+            <AlertCircle className="h-4 w-4 shrink-0 text-[#171717]" />
+            <span>{error}</span>
           </div>
         )}
 
         <button
           type="submit"
-          className="w-full rounded-lg bg-[#4a573e] px-4 py-3 text-xs font-semibold tracking-wider text-white uppercase transition hover:bg-[#3a4531] focus:ring-2 focus:ring-[#4a573e] focus:ring-offset-2 focus:outline-none"
+          className="w-full rounded-lg bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#262626] focus:ring-2 focus:ring-[#171717] focus:ring-offset-2 focus:outline-none"
         >
           Create household
         </button>

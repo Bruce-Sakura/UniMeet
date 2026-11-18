@@ -47,27 +47,42 @@ function isValidExpense(value: unknown): value is Expense {
   );
 }
 
-export function loadState(): SplitNestState {
+export interface LoadStateResult {
+  state: SplitNestState;
+  error: string | null;
+}
+
+export function loadStateResult(): LoadStateResult {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      return EMPTY_STATE;
+      return { state: EMPTY_STATE, error: null };
     }
     const parsed: unknown = JSON.parse(raw);
     if (!isRecord(parsed)) {
-      return EMPTY_STATE;
+      console.error('Failed to parse SplitNest state from localStorage: root is not an object');
+      return { state: EMPTY_STATE, error: 'Saved ledger data is corrupted.' };
     }
     const household = isValidHousehold(parsed.household) ? parsed.household : null;
     if (!household) {
-      return EMPTY_STATE;
+      console.error('Failed to parse SplitNest state from localStorage: invalid household schema');
+      return { state: EMPTY_STATE, error: 'Saved household data is invalid.' };
     }
     const expenses = Array.isArray(parsed.expenses)
       ? parsed.expenses.filter(isValidExpense)
       : [];
-    return { household, expenses };
-  } catch {
-    return EMPTY_STATE;
+    return { state: { household, expenses }, error: null };
+  } catch (error) {
+    console.error('Failed to read SplitNest state from localStorage:', error);
+    return {
+      state: EMPTY_STATE,
+      error: 'Unable to access browser storage; saved ledger data could not be loaded.',
+    };
   }
+}
+
+export function loadState(): SplitNestState {
+  return loadStateResult().state;
 }
 
 export function saveState(state: SplitNestState): boolean {

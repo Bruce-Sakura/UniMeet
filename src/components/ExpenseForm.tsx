@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
+import { PlusCircle, RotateCcw, AlertCircle, Check } from 'lucide-react';
 import type { Household } from '../types/splitnest';
 import { validateExpenseInput, type ValidatedExpenseInput } from '../lib/validation';
+import { parseGbpToPence, formatPenceToGbp } from '../lib/money';
 
 interface ExpenseFormProps {
   household: Household;
@@ -8,11 +10,11 @@ interface ExpenseFormProps {
 }
 
 export function ExpenseForm({ household, onAddExpense }: ExpenseFormProps) {
-  const allMemberIds = household.members.map((m) => m.id);
+  const allIds = household.members.map((m) => m.id);
   const [description, setDescription] = useState('');
   const [amountInput, setAmountInput] = useState('');
   const [payerId, setPayerId] = useState('');
-  const [participantIds, setParticipantIds] = useState<string[]>(allMemberIds);
+  const [participantIds, setParticipantIds] = useState<string[]>(allIds);
   const [error, setError] = useState<string | null>(null);
 
   const toggleParticipant = (id: string) => {
@@ -20,6 +22,14 @@ export function ExpenseForm({ household, onAddExpense }: ExpenseFormProps) {
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
     if (error) setError(null);
+  };
+
+  const handleReset = () => {
+    setDescription('');
+    setAmountInput('');
+    setPayerId('');
+    setParticipantIds(allIds);
+    setError(null);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -34,76 +44,64 @@ export function ExpenseForm({ household, onAddExpense }: ExpenseFormProps) {
     }
     setError(null);
     onAddExpense(result.value);
-    setDescription('');
-    setAmountInput('');
-    setPayerId('');
-    setParticipantIds(allMemberIds);
+    handleReset();
   };
 
+  const pence = parseGbpToPence(amountInput);
+  const count = participantIds.length;
+  const splitPreview = pence && count > 0
+    ? `${formatPenceToGbp(Math.floor(pence / count))} each (${count} ${count === 1 ? 'person' : 'people'})`
+    : null;
+
   return (
-    <section
-      aria-labelledby="add-expense-heading"
-      className="rounded-2xl border border-[#dcdccf] bg-[#fdfcf7] p-6 shadow-[0_2px_12px_rgba(43,54,44,0.04)]"
-    >
-      <div className="border-b border-[#ece9dc] pb-4">
-        <div className="text-[10px] font-medium tracking-[0.2em] text-[#717b6a] uppercase">New Entry</div>
-        <h2 id="add-expense-heading" className="mt-1 font-serif text-xl font-normal text-[#2b362c]">
-          Add shared expense
-        </h2>
+    <section id="expense-form-section" aria-labelledby="add-expense-heading" className="rounded-xl border border-[#E5E5E5] bg-white p-6 shadow-xs">
+      <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-4">
+        <div>
+          <h2 id="add-expense-heading" className="text-base font-semibold tracking-tight text-[#171717]">Add shared expense</h2>
+          <p className="mt-0.5 text-xs text-[#737373]">Split a bill or grocery shop equally across housemates</p>
+        </div>
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E5E5] bg-[#F7F7F8] text-[#171717]">
+          <PlusCircle className="h-4 w-4" />
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} noValidate className="mt-5 space-y-4">
         <div>
-          <label htmlFor="expense-description" className="block text-xs font-medium tracking-wide text-[#424c3f] uppercase">
-            Description
-          </label>
+          <label htmlFor="expense-description" className="block text-xs font-medium uppercase tracking-wider text-[#737373]">Description</label>
           <input
             id="expense-description"
             type="text"
             value={description}
-            onChange={(e) => {
-              setDescription(e.target.value);
-              if (error) setError(null);
-            }}
+            onChange={(e) => { setDescription(e.target.value); if (error) setError(null); }}
             placeholder="e.g. Weekly groceries, Wi-Fi bill"
-            className="mt-1.5 block w-full rounded-lg border border-[#dadcca] bg-white px-3.5 py-2.5 text-sm text-[#2b362c] placeholder:text-[#9ea397] focus:border-[#4a573e] focus:ring-1 focus:ring-[#4a573e] focus:outline-none"
+            className="mt-1.5 block w-full rounded-lg border border-[#E5E5E5] bg-white px-3.5 py-2.5 text-sm text-[#171717] placeholder:text-[#A3A3A3] focus:border-[#171717] focus:ring-1 focus:ring-[#171717] focus:outline-none"
           />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="expense-amount" className="block text-xs font-medium tracking-wide text-[#424c3f] uppercase">
-              Amount (£ GBP)
-            </label>
+            <label htmlFor="expense-amount" className="block text-xs font-medium uppercase tracking-wider text-[#737373]">Amount (£ GBP)</label>
             <div className="relative mt-1.5">
-              <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 font-mono text-sm text-[#717b6a]">£</span>
+              <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 font-mono text-sm text-[#737373]">£</span>
               <input
                 id="expense-amount"
                 type="text"
                 inputMode="decimal"
                 value={amountInput}
-                onChange={(e) => {
-                  setAmountInput(e.target.value);
-                  if (error) setError(null);
-                }}
+                onChange={(e) => { setAmountInput(e.target.value); if (error) setError(null); }}
                 placeholder="0.00"
-                className="block w-full rounded-lg border border-[#dadcca] bg-white py-2.5 pr-3 pl-8 font-mono text-sm text-[#2b362c] placeholder:text-[#9ea397] focus:border-[#4a573e] focus:ring-1 focus:ring-[#4a573e] focus:outline-none"
+                className="block w-full rounded-lg border border-[#E5E5E5] bg-white py-2.5 pr-3 pl-8 font-mono text-sm tabular-nums text-[#171717] placeholder:text-[#A3A3A3] focus:border-[#171717] focus:ring-1 focus:ring-[#171717] focus:outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="expense-payer" className="block text-xs font-medium tracking-wide text-[#424c3f] uppercase">
-              Paid by
-            </label>
+            <label htmlFor="expense-payer" className="block text-xs font-medium uppercase tracking-wider text-[#737373]">Paid by</label>
             <select
               id="expense-payer"
               value={payerId}
-              onChange={(e) => {
-                setPayerId(e.target.value);
-                if (error) setError(null);
-              }}
-              className="mt-1.5 block w-full rounded-lg border border-[#dadcca] bg-white px-3 py-2.5 text-sm text-[#2b362c] focus:border-[#4a573e] focus:ring-1 focus:ring-[#4a573e] focus:outline-none"
+              onChange={(e) => { setPayerId(e.target.value); if (error) setError(null); }}
+              className="mt-1.5 block w-full rounded-lg border border-[#E5E5E5] bg-white px-3 py-2.5 text-sm text-[#171717] focus:border-[#171717] focus:ring-1 focus:ring-[#171717] focus:outline-none"
             >
               <option value="">Select housemate...</option>
               {household.members.map((m) => (
@@ -115,26 +113,11 @@ export function ExpenseForm({ household, onAddExpense }: ExpenseFormProps) {
 
         <fieldset>
           <div className="flex items-center justify-between">
-            <legend className="text-xs font-medium tracking-wide text-[#424c3f] uppercase">Split equally between</legend>
+            <legend className="text-xs font-medium uppercase tracking-wider text-[#737373]">Split equally between</legend>
             <div className="flex gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  setParticipantIds(allMemberIds);
-                  if (error) setError(null);
-                }}
-                className="text-[#4a573e] underline decoration-[#b8baa6] underline-offset-2 hover:text-[#3a4531]"
-              >
-                All
-              </button>
-              <span className="text-[#dadcca]">·</span>
-              <button
-                type="button"
-                onClick={() => setParticipantIds([])}
-                className="text-[#717b6a] hover:text-[#2b362c]"
-              >
-                Clear
-              </button>
+              <button type="button" onClick={() => { setParticipantIds(allIds); if (error) setError(null); }} className="font-medium text-[#171717] hover:text-[#737373]">All</button>
+              <span className="text-[#E5E5E5]">|</span>
+              <button type="button" onClick={() => setParticipantIds([])} className="text-[#737373] hover:text-[#171717]">Clear</button>
             </div>
           </div>
 
@@ -144,37 +127,54 @@ export function ExpenseForm({ household, onAddExpense }: ExpenseFormProps) {
               return (
                 <label
                   key={member.id}
-                  className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-xs transition ${
-                    checked
-                      ? 'border-[#4a573e] bg-[#f0f4ec] font-medium text-[#243021]'
-                      : 'border-[#dadcca] bg-white text-[#6e7568] hover:bg-[#f5f3ea]'
+                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors select-none ${
+                    checked ? 'border-[#171717] bg-[#F7F7F8] font-medium text-[#171717]' : 'border-[#E5E5E5] bg-white text-[#737373] hover:bg-[#F3F4F6]'
                   }`}
                 >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggleParticipant(member.id)}
-                    className="h-3.5 w-3.5 rounded border-[#dadcca] text-[#4a573e] focus:ring-[#4a573e]"
-                  />
+                  <input type="checkbox" checked={checked} onChange={() => toggleParticipant(member.id)} className="sr-only" />
+                  <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                    checked ? 'border-[#171717] bg-[#171717] text-white' : 'border-[#E5E5E5] bg-white'
+                  }`}>
+                    {checked && <Check className="h-3 w-3 stroke-[3]" />}
+                  </div>
                   <span className="truncate">{member.name}</span>
                 </label>
               );
             })}
           </div>
+
+          {splitPreview && (
+            <div className="mt-2.5 flex items-center justify-between rounded-lg border border-[#E5E5E5] bg-[#F7F7F8] px-3 py-2 text-xs">
+              <span className="text-[#737373]">Live equal-split preview:</span>
+              <span className="font-mono font-medium text-[#171717] tabular-nums">{splitPreview}</span>
+            </div>
+          )}
         </fieldset>
 
         {error && (
-          <div role="alert" className="rounded-lg border border-[#e2b8ad] bg-[#faf0ed] px-3.5 py-2.5 text-xs text-[#9e4a34]">
-            {error}
+          <div role="alert" className="flex items-center gap-2 rounded-lg border border-[#171717] bg-[#F7F7F8] p-3 text-xs font-medium text-[#171717]">
+            <AlertCircle className="h-4 w-4 shrink-0 text-[#171717]" />
+            <span>{error}</span>
           </div>
         )}
 
-        <button
-          type="submit"
-          className="w-full rounded-lg bg-[#4a573e] px-4 py-2.5 text-xs font-semibold tracking-wider text-white uppercase transition hover:bg-[#3a4531] focus:ring-2 focus:ring-[#4a573e] focus:ring-offset-2 focus:outline-none"
-        >
-          Add expense
-        </button>
+        <div className="flex items-center gap-2 pt-1">
+          <button
+            type="submit"
+            className="flex-1 rounded-lg bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#262626] focus:ring-2 focus:ring-[#171717] focus:ring-offset-2 focus:outline-none"
+          >
+            Add expense
+          </button>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#E5E5E5] text-[#737373] hover:bg-[#F3F4F6] hover:text-[#171717]"
+            title="Reset"
+            aria-label="Reset"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </button>
+        </div>
       </form>
     </section>
   );

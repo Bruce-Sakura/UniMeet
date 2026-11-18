@@ -1,3 +1,4 @@
+import { Scale, ArrowUpRight, ArrowDownLeft, CheckCircle2 } from 'lucide-react';
 import type { HousemateBalance } from '../types/splitnest';
 import { formatPenceToGbp } from '../lib/money';
 
@@ -8,25 +9,25 @@ interface BalanceListProps {
 export function BalanceList({ balances }: BalanceListProps) {
   return (
     <section
-      aria-labelledby="net-balances-heading"
-      className="rounded-2xl border border-[#dcdccf] bg-[#fdfcf7] p-6 shadow-[0_2px_12px_rgba(43,54,44,0.04)]"
+      role="region"
+      aria-label="Net balances"
+      className="rounded-xl border border-[#E5E5E5] bg-white p-6 shadow-xs"
     >
-      <div className="border-b border-[#ece9dc] pb-4">
-        <div className="text-[10px] font-medium tracking-[0.2em] text-[#717b6a] uppercase">
-          Accounts
+      <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-4">
+        <div>
+          <h2 id="net-balances-heading" className="text-base font-semibold tracking-tight text-[#171717]">
+            Net balances
+          </h2>
+          <p className="mt-0.5 text-xs text-[#737373]">
+            Calculated in integer pence. Positive balances are owed back to the housemate.
+          </p>
         </div>
-        <h2
-          id="net-balances-heading"
-          className="mt-1 font-serif text-xl font-normal text-[#2b362c]"
-        >
-          Net balances
-        </h2>
-        <p className="mt-1 text-xs text-[#717b6a]">
-          Calculated in integer pence. Positive balances are owed back to the housemate.
-        </p>
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E5E5] bg-[#F7F7F8] text-[#171717]">
+          <Scale className="h-4 w-4" />
+        </div>
       </div>
 
-      <ul className="mt-4 divide-y divide-[#ece9dc]">
+      <ul className="mt-4 divide-y divide-[#E5E5E5]">
         {balances.map((item) => {
           const isOwed = item.netPence > 0;
           const owes = item.netPence < 0;
@@ -36,30 +37,32 @@ export function BalanceList({ balances }: BalanceListProps) {
               key={item.memberId}
               className="flex items-center justify-between gap-3 py-3.5 first:pt-1 last:pb-1"
             >
-              <div>
-                <p className="text-sm font-medium text-[#2b362c]">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-[#171717] truncate">
                   {item.memberName}
                 </p>
-                <p className="font-mono text-[11px] text-[#717b6a] tabular-nums">
-                  Paid {formatPenceToGbp(item.paidPence)} · Share{' '}
-                  {formatPenceToGbp(item.sharePence)}
+                <p className="font-mono text-xs text-[#737373] tabular-nums mt-0.5">
+                  Paid {formatPenceToGbp(item.paidPence)} · Share {formatPenceToGbp(item.sharePence)}
                 </p>
               </div>
 
-              <div className="text-right">
+              <div className="shrink-0 text-right">
                 {isOwed && (
-                  <span className="inline-flex items-center rounded-full border border-[#cad5c3] bg-[#edf2e8] px-3 py-1 font-mono text-xs font-semibold text-[#3b5435] tabular-nums">
-                    is owed {formatPenceToGbp(item.netPence)}
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-[#171717] bg-[#171717] px-2.5 py-1 font-mono text-xs font-medium text-white tabular-nums">
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                    <span>is owed {formatPenceToGbp(item.netPence)}</span>
                   </span>
                 )}
                 {owes && (
-                  <span className="inline-flex items-center rounded-full border border-[#e8c6bc] bg-[#faf0ed] px-3 py-1 font-mono text-xs font-semibold text-[#9e4a34] tabular-nums">
-                    owes {formatPenceToGbp(Math.abs(item.netPence))}
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-[#E5E5E5] bg-[#F7F7F8] px-2.5 py-1 font-mono text-xs font-medium text-[#171717] tabular-nums">
+                    <ArrowDownLeft className="h-3.5 w-3.5 text-[#737373]" />
+                    <span>owes {formatPenceToGbp(Math.abs(item.netPence))}</span>
                   </span>
                 )}
                 {!isOwed && !owes && (
-                  <span className="inline-flex items-center rounded-full border border-[#dadcca] bg-[#f5f3ea] px-3 py-1 font-mono text-xs text-[#717b6a] tabular-nums">
-                    settled ({formatPenceToGbp(0)})
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-[#E5E5E5] bg-white px-2.5 py-1 font-mono text-xs text-[#737373] tabular-nums">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-[#A3A3A3]" />
+                    <span>settled ({formatPenceToGbp(0)})</span>
                   </span>
                 )}
               </div>

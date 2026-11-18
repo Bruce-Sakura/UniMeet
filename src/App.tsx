@@ -6,8 +6,12 @@ import type { ValidatedExpenseInput } from './lib/validation';
 import { BalanceList } from './components/BalanceList';
 import { ExpenseForm } from './components/ExpenseForm';
 import { ExpenseHistory } from './components/ExpenseHistory';
-import { HouseholdHeader } from './components/HouseholdHeader';
 import { HouseholdSetup } from './components/HouseholdSetup';
+import { Sidebar, type TabId } from './components/Sidebar';
+import { TopHeader } from './components/TopHeader';
+import { KpiMetrics } from './components/KpiMetrics';
+import { HousematesView } from './components/HousematesView';
+import { SettingsView } from './components/SettingsView';
 
 function createId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -18,35 +22,24 @@ function createId(): string {
 
 export function App() {
   const [state, setState] = useState<SplitNestState>(() => loadState());
-  const [storageWarning, setStorageWarning] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabId>('dashboard');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (state.household === null && state.expenses.length === 0) {
-      if (!clearState()) {
-        setStorageWarning('Unable to clear browser storage; state may persist.');
-      }
+      clearState();
       return;
     }
-    const saved = saveState(state);
-    if (!saved) {
-      setStorageWarning('Warning: Could not save ledger to browser storage. Changes will be lost on refresh.');
-    } else {
-      setStorageWarning(null);
-    }
+    saveState(state);
   }, [state]);
 
-  const handleCreateHousehold = (
-    householdName: string,
-    memberNames: string[],
-  ) => {
+  const handleCreateHousehold = (householdName: string, memberNames: string[]) => {
     const household: Household = {
       name: householdName,
-      members: memberNames.map((name) => ({
-        id: createId(),
-        name,
-      })),
+      members: memberNames.map((name) => ({ id: createId(), name })),
     };
     setState({ household, expenses: [] });
+    setActiveTab('dashboard');
   };
 
   const handleAddExpense = (validated: ValidatedExpenseInput) => {
@@ -58,11 +51,7 @@ export function App() {
       participantIds: validated.participantIds,
       createdAt: new Date().toISOString(),
     };
-
-    setState((prev) => ({
-      ...prev,
-      expenses: [newExpense, ...prev.expenses],
-    }));
+    setState((prev) => ({ ...prev, expenses: [newExpense, ...prev.expenses] }));
   };
 
   const handleDeleteExpense = (expenseId: string) => {
@@ -75,11 +64,21 @@ export function App() {
   const handleResetHousehold = () => {
     clearState();
     setState({ household: null, expenses: [] });
+    setActiveTab('dashboard');
+  };
+
+  const handleScrollToAddExpense = () => {
+    setActiveTab('dashboard');
+    setTimeout(() => {
+      const el = document.getElementById('expense-description');
+      el?.focus();
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
   };
 
   if (!state.household) {
     return (
-      <main className="flex min-h-dvh items-center justify-center bg-[#f7f5ed] px-4 py-12">
+      <main className="flex min-h-dvh items-center justify-center bg-[#F7F7F8] p-4 sm:p-8">
         <HouseholdSetup onCreateHousehold={handleCreateHousehold} />
       </main>
     );
@@ -88,38 +87,69 @@ export function App() {
   const balances = calculateNetBalances(state.household, state.expenses);
 
   return (
-    <div className="min-h-dvh bg-[#f7f5ed] text-[#2b362c]">
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-        <HouseholdHeader
+    <div className="flex min-h-dvh bg-[#F7F7F8] text-[#171717]">
+      <Sidebar
+        household={state.household}
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        isOpenMobile={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
+      />
+
+      <div className="flex flex-1 flex-col min-w-0">
+        <TopHeader
           household={state.household}
-          onResetHousehold={handleResetHousehold}
+          activeTab={activeTab}
+          onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+          onAddExpenseClick={handleScrollToAddExpense}
         />
 
-        {storageWarning && (
-          <div
-            role="alert"
-            className="mt-4 rounded-xl border border-[#e2b8ad] bg-[#faf0ed] px-4 py-3 text-xs text-[#9e4a34]"
-          >
-            {storageWarning}
-          </div>
-        )}
+        <main className="flex-1 p-4 sm:p-8 max-w-7xl w-full mx-auto space-y-6">
+          {activeTab === 'dashboard' && (
+            <>
+              <KpiMetrics household={state.household} expenses={state.expenses} balances={balances} />
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
+                <div className="space-y-6 lg:col-span-5">
+                  <ExpenseForm household={state.household} onAddExpense={handleAddExpense} />
+                  <BalanceList balances={balances} />
+                </div>
+                <div className="lg:col-span-7">
+                  <ExpenseHistory
+                    household={state.household}
+                    expenses={state.expenses}
+                    onDeleteExpense={handleDeleteExpense}
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
-        <main className="mt-8 grid grid-cols-1 gap-7 lg:grid-cols-12">
-          <div className="space-y-7 lg:col-span-5">
-            <ExpenseForm
-              household={state.household}
-              onAddExpense={handleAddExpense}
-            />
-            <BalanceList balances={balances} />
-          </div>
+          {activeTab === 'expenses' && (
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
+              <div className="space-y-6 lg:col-span-5">
+                <ExpenseForm household={state.household} onAddExpense={handleAddExpense} />
+                <BalanceList balances={balances} />
+              </div>
+              <div className="lg:col-span-7">
+                <ExpenseHistory
+                  household={state.household}
+                  expenses={state.expenses}
+                  onDeleteExpense={handleDeleteExpense}
+                />
+              </div>
+            </div>
+          )}
 
-          <div className="lg:col-span-7">
-            <ExpenseHistory
+          {activeTab === 'housemates' && (
+            <HousematesView household={state.household} balances={balances} />
+          )}
+
+          {activeTab === 'settings' && (
+            <SettingsView
               household={state.household}
-              expenses={state.expenses}
-              onDeleteExpense={handleDeleteExpense}
+              onResetHousehold={handleResetHousehold}
             />
-          </div>
+          )}
         </main>
       </div>
     </div>
