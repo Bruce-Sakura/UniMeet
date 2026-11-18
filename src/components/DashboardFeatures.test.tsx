@@ -78,4 +78,18 @@ describe('SplitNest Premium Dashboard Features', () => {
     // Should return to setup onboarding screen
     expect(screen.getByRole('button', { name: /create household/i })).toBeInTheDocument();
   });
+
+  it('loads 3-person sample data when requested from setup onboarding', async () => {
+    const user = userEvent.setup();
+    clearState();
+    render(<App />);
+
+    const loadSampleBtn = screen.getByRole('button', { name: /load 3-person sample data/i });
+    await user.click(loadSampleBtn);
+
+    expect(screen.getByRole('heading', { name: '42 Oakfield Road' })).toBeInTheDocument();
+    expect(screen.getByText("Weekly Sainsbury's groceries")).toBeInTheDocument();
+    expect(screen.getByText('Virgin Media Fibre Broadband')).toBeInTheDocument();
+    expect(screen.getByText('Household essentials & cleaning')).toBeInTheDocument();
+  });
 });

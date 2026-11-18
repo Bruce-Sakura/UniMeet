@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { App } from './App';
@@ -74,5 +74,20 @@ describe('SplitNest UI integration', () => {
     await user.click(screen.getByRole('button', { name: /delete house groceries/i }));
     expect(screen.queryByText('House groceries')).not.toBeInTheDocument();
     expect(within(restoredBalances).getAllByText(/settled \(£0\.00\)/i)).toHaveLength(3);
+  });
+
+  it('surfaces storage read failure alert without wiping storage when loadState fails', async () => {
+    const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('Storage access denied');
+    });
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem');
+
+    render(<App />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/unable to access browser storage/i);
+    expect(removeItemSpy).not.toHaveBeenCalled();
+
+    getItemSpy.mockRestore();
+    removeItemSpy.mockRestore();
   });
 });

@@ -5,9 +5,10 @@ import type { Household } from '../types/splitnest';
 interface SettingsViewProps {
   household: Household;
   onResetHousehold: () => void;
+  onLoadSampleData?: () => void;
 }
 
-export function SettingsView({ household, onResetHousehold }: SettingsViewProps) {
+export function SettingsView({ household, onResetHousehold, onLoadSampleData }: SettingsViewProps) {
   const [showConfirmReset, setShowConfirmReset] = useState(false);
 
   return (
@@ -73,13 +74,24 @@ export function SettingsView({ household, onResetHousehold }: SettingsViewProps)
             </p>
 
             {!showConfirmReset ? (
-              <button
-                type="button"
-                onClick={() => setShowConfirmReset(true)}
-                className="mt-4 rounded-lg border border-[#171717] px-3.5 py-2 text-xs font-medium text-[#171717] hover:bg-[#171717] hover:text-white transition-colors"
-              >
-                Reset household ledger
-              </button>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmReset(true)}
+                  className="rounded-lg border border-[#171717] px-3.5 py-2 text-xs font-medium text-[#171717] hover:bg-[#171717] hover:text-white transition-colors"
+                >
+                  Reset household ledger
+                </button>
+                {onLoadSampleData && (
+                  <button
+                    type="button"
+                    onClick={onLoadSampleData}
+                    className="rounded-lg border border-[#E5E5E5] bg-[#F7F7F8] px-3.5 py-2 text-xs font-medium text-[#171717] hover:bg-[#E5E5E5] transition-colors"
+                  >
+                    Reset to 3-housemate sample data
+                  </button>
+                )}
+              </div>
             ) : (
               <div className="mt-4 rounded-lg border border-[#171717] bg-[#F7F7F8] p-4">
                 <p className="text-xs font-semibold text-[#171717]">

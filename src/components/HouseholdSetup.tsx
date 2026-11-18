@@ -4,9 +4,10 @@ import { validateHouseholdInput } from '../lib/validation';
 
 interface HouseholdSetupProps {
   onCreateHousehold: (householdName: string, memberNames: string[]) => void;
+  onLoadSampleData?: () => void;
 }
 
-export function HouseholdSetup({ onCreateHousehold }: HouseholdSetupProps) {
+export function HouseholdSetup({ onCreateHousehold, onLoadSampleData }: HouseholdSetupProps) {
   const [householdName, setHouseholdName] = useState('');
   const [memberRows, setMemberRows] = useState<string[]>(['', '']);
   const [error, setError] = useState<string | null>(null);
@@ -135,6 +136,18 @@ export function HouseholdSetup({ onCreateHousehold }: HouseholdSetupProps) {
         >
           Create household
         </button>
+
+        {onLoadSampleData && (
+          <div className="pt-2 text-center">
+            <button
+              type="button"
+              onClick={onLoadSampleData}
+              className="text-xs font-medium text-[#737373] hover:text-[#171717] transition-colors underline underline-offset-4"
+            >
+              Load 3-person sample data (Alice, Bob, Charlie)
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );

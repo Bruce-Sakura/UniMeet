@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Expense, Household, SplitNestState } from './types/splitnest';
 import { calculateNetBalances } from './lib/balances';
-import { clearState, loadState, saveState } from './lib/storage';
+import { clearState, loadStateResult, saveState, type LoadStateResult } from './lib/storage';
 import type { ValidatedExpenseInput } from './lib/validation';
 import { BalanceList } from './components/BalanceList';
 import { ExpenseForm } from './components/ExpenseForm';
@@ -12,32 +12,37 @@ import { TopHeader } from './components/TopHeader';
 import { KpiMetrics } from './components/KpiMetrics';
 import { HousematesView } from './components/HousematesView';
 import { SettingsView } from './components/SettingsView';
-
-function createId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  return `id_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-}
+import { SAMPLE_3_USER_STATE, createId } from './lib/sampleData';
 
 export function App() {
-  const [state, setState] = useState<SplitNestState>(() => loadState());
+  const [initialLoad] = useState<LoadStateResult>(() => loadStateResult());
+  const [state, setState] = useState<SplitNestState>(initialLoad.state);
+  const [storageWarning, setStorageWarning] = useState<string | null>(initialLoad.error);
+  const [hasLoadedSuccessfully, setHasLoadedSuccessfully] = useState(initialLoad.error === null);
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (state.household === null && state.expenses.length === 0) {
-      clearState();
+    if (!hasLoadedSuccessfully) {
       return;
     }
-    saveState(state);
-  }, [state]);
+    if (state.household === null && state.expenses.length === 0) {
+      if (!clearState()) setStorageWarning('Unable to clear browser storage; state may persist.');
+      return;
+    }
+    const saved = saveState(state);
+    setStorageWarning(
+      saved ? null : 'Warning: Could not save ledger to browser storage. Changes will be lost on refresh.',
+    );
+  }, [state, hasLoadedSuccessfully]);
 
   const handleCreateHousehold = (householdName: string, memberNames: string[]) => {
     const household: Household = {
       name: householdName,
       members: memberNames.map((name) => ({ id: createId(), name })),
     };
+    setHasLoadedSuccessfully(true);
+    setStorageWarning(null);
     setState({ household, expenses: [] });
     setActiveTab('dashboard');
   };
@@ -62,8 +67,18 @@ export function App() {
   };
 
   const handleResetHousehold = () => {
-    clearState();
+    const cleared = clearState();
+    setStorageWarning(cleared ? null : 'Unable to clear browser storage; state may persist.');
+    setHasLoadedSuccessfully(true);
     setState({ household: null, expenses: [] });
+    setActiveTab('dashboard');
+  };
+
+  const handleLoadSampleData = () => {
+    saveState(SAMPLE_3_USER_STATE);
+    setStorageWarning(null);
+    setHasLoadedSuccessfully(true);
+    setState(SAMPLE_3_USER_STATE);
     setActiveTab('dashboard');
   };
 
@@ -78,8 +93,19 @@ export function App() {
 
   if (!state.household) {
     return (
-      <main className="flex min-h-dvh items-center justify-center bg-[#F7F7F8] p-4 sm:p-8">
-        <HouseholdSetup onCreateHousehold={handleCreateHousehold} />
+      <main className="flex min-h-dvh flex-col items-center justify-center bg-[#F7F7F8] p-4 sm:p-8">
+        {storageWarning && (
+          <div
+            role="alert"
+            className="mb-4 max-w-md w-full rounded-lg border border-[#171717] bg-[#F7F7F8] p-3 text-xs font-medium text-[#171717]"
+          >
+            {storageWarning}
+          </div>
+        )}
+        <HouseholdSetup
+          onCreateHousehold={handleCreateHousehold}
+          onLoadSampleData={handleLoadSampleData}
+        />
       </main>
     );
   }
@@ -105,6 +131,14 @@ export function App() {
         />
 
         <main className="flex-1 p-4 sm:p-8 max-w-7xl w-full mx-auto space-y-6">
+          {storageWarning && (
+            <div
+              role="alert"
+              className="rounded-lg border border-[#171717] bg-[#F7F7F8] p-3 text-xs font-medium text-[#171717]"
+            >
+              {storageWarning}
+            </div>
+          )}
           {activeTab === 'dashboard' && (
             <>
               <KpiMetrics household={state.household} expenses={state.expenses} balances={balances} />
@@ -148,6 +182,7 @@ export function App() {
             <SettingsView
               household={state.household}
               onResetHousehold={handleResetHousehold}
+              onLoadSampleData={handleLoadSampleData}
             />
           )}
         </main>
