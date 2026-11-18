@@ -18,13 +18,21 @@ function createId(): string {
 
 export function App() {
   const [state, setState] = useState<SplitNestState>(() => loadState());
+  const [storageWarning, setStorageWarning] = useState<string | null>(null);
 
   useEffect(() => {
     if (state.household === null && state.expenses.length === 0) {
-      clearState();
+      if (!clearState()) {
+        setStorageWarning('Unable to clear browser storage; state may persist.');
+      }
       return;
     }
-    saveState(state);
+    const saved = saveState(state);
+    if (!saved) {
+      setStorageWarning('Warning: Could not save ledger to browser storage. Changes will be lost on refresh.');
+    } else {
+      setStorageWarning(null);
+    }
   }, [state]);
 
   const handleCreateHousehold = (
@@ -86,6 +94,15 @@ export function App() {
           household={state.household}
           onResetHousehold={handleResetHousehold}
         />
+
+        {storageWarning && (
+          <div
+            role="alert"
+            className="mt-4 rounded-xl border border-[#e2b8ad] bg-[#faf0ed] px-4 py-3 text-xs text-[#9e4a34]"
+          >
+            {storageWarning}
+          </div>
+        )}
 
         <main className="mt-8 grid grid-cols-1 gap-7 lg:grid-cols-12">
           <div className="space-y-7 lg:col-span-5">

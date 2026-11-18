@@ -70,18 +70,22 @@ export function loadState(): SplitNestState {
   }
 }
 
-export function saveState(state: SplitNestState): void {
+export function saveState(state: SplitNestState): boolean {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // Ignore quota errors in restricted browsing modes
+    return true;
+  } catch (error) {
+    console.error('Failed to persist SplitNest state to localStorage:', error);
+    return false;
   }
 }
 
-export function clearState(): void {
+export function clearState(): boolean {
   try {
     window.localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // Ignore storage errors
+    return true;
+  } catch (error) {
+    console.error('Failed to clear SplitNest state from localStorage:', error);
+    return false;
   }
 }
